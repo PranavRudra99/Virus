@@ -1,1 +1,3 @@
 Need to implement own & write access check(Point - 2).
+Copy binary is incorrect need to update.
+can create directory is inhibiting copy binary.

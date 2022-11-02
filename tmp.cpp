@@ -8,7 +8,7 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-    std::cout << "SEED" << endl;
+    std::cout << "TEST TMP!!!" << endl;
     return 0;
 }
 

