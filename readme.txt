@@ -15,3 +15,6 @@ size(infected_binary) = size(some_binary) + size(virus) + 14 bytes.
 
 4 bytes of this is the offset: 0xdeadbeef.
 The rest 10 bytes is a random hex of length 20 (20*4 = 80 bits = 10 bytes).
+
+Mutation:
+For mutation, the virus generates a random 20 character hex. Which will be appended in binary format to the hex: "0xdeadbeef". These 14 bytes separate the virus from the uninfected binary.
